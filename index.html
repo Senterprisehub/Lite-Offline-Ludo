@@ -1,0 +1,2656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ludo Master - Offline Auto-Bot & 10M Edition</title>
+  <!-- Zero-dependency fallbacks included internally -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 20px 35px -10px rgba(15, 23, 42, 0.12);
+
+      /* High-contrast sunlight readable colors */
+      --red: #ef4444;
+      --red-bg: #fee2e2;
+      --red-border: #dc2626;
+
+      --green: #10b981;
+      --green-bg: #d1fae5;
+      --green-border: #059669;
+
+      --yellow: #f59e0b;
+      --yellow-bg: #fef3c7;
+      --yellow-border: #d97706;
+
+      --blue: #2563eb;
+      --blue-bg: #dbeafe;
+      --blue-border: #1d4ed8;
+
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Universal Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--red), var(--yellow), var(--green), var(--blue));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-icon:hover {
+      background: var(--bg-subtle);
+    }
+
+    .btn-icon.highlight {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .bt-status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #94a3b8;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+
+    .bt-status-dot.active {
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+
+    /* Pages Container */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      max-width: 580px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .page {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .page.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      color: var(--text-main);
+    }
+
+    .card-subtitle {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      text-align: center;
+      margin-bottom: 22px;
+      line-height: 1.4;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-main:active {
+      transform: scale(0.98);
+    }
+
+    .btn-room {
+      background: #fef3c7;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+
+    .btn-pass {
+      background: #d1fae5;
+      border-color: #a7f3d0;
+      color: #065f46;
+    }
+
+    .btn-ai {
+      background: #e0e7ff;
+      border-color: #c7d2fe;
+      color: #3730a3;
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      border-color: var(--border-color);
+      color: var(--text-muted);
+    }
+
+    /* Configuration Panel Controls */
+    .section-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 800;
+      margin: 16px 0 8px 0;
+    }
+
+    .segmented-control {
+      display: flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .seg-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 800;
+      font-size: 0.88rem;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .seg-btn.active {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .player-slot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .player-slot-row {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px 14px;
+      gap: 10px;
+    }
+
+    .slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slot-identity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slot-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    .slot-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .bot-mode-toggle {
+      display: inline-flex;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 9999px;
+      padding: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .bot-toggle-btn {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+
+    .bot-toggle-btn.active {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .swatch:hover, .swatch.active {
+      transform: scale(1.22);
+      border-color: #0f172a;
+    }
+
+    /* Offline QR Display Area */
+    .qr-box {
+      background: var(--bg-main);
+      border: 2px dashed var(--border-color);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 16px 0;
+      width: 100%;
+    }
+
+    .qr-container {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 190px;
+      min-height: 190px;
+    }
+
+    .qr-container canvas {
+      width: 180px !important;
+      height: 180px !important;
+      display: block;
+    }
+
+    .room-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e2e8f0;
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      margin-top: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .offline-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: #dcfce7;
+      color: #15803d;
+      margin-top: 8px;
+    }
+
+    /* Game Board Screen */
+    .game-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+
+    /* Dynamic "Stop Bot" Banner & Button */
+    .bot-takeover-bar {
+      width: 100%;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 1.5px solid #f59e0b;
+      border-radius: 14px;
+      padding: 8px 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      animation: botPulse 1.5s infinite alternate;
+    }
+
+    @keyframes botPulse {
+      0% { box-shadow: 0 0 0 rgba(245, 158, 11, 0.2); }
+      100% { box-shadow: 0 0 14px rgba(245, 158, 11, 0.45); }
+    }
+
+    .bot-takeover-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #92400e;
+    }
+
+    .btn-stop-bot {
+      background: #dc2626;
+      border: none;
+      color: #ffffff;
+      padding: 7px 14px;
+      border-radius: 9999px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .btn-stop-bot:hover {
+      background: #b91c1c;
+    }
+
+    .btn-stop-bot:active {
+      transform: scale(0.95);
+    }
+
+    .board-container {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      border: 2px solid var(--border-color);
+      position: relative;
+      touch-action: manipulation;
+    }
+
+    canvas#ludoCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+    }
+
+    /* Controls Bar & 3D Dice */
+    .game-controls-bar {
+      width: 100%;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 12px 18px;
+      gap: 14px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .turn-status-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .turn-orb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    }
+
+    .turn-meta h4 {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .turn-meta p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .turn-countdown-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      margin-top: 3px;
+    }
+
+    .turn-countdown-badge.urgent {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+      animation: urgentFlash 0.5s infinite alternate;
+    }
+
+    @keyframes urgentFlash {
+      0% { opacity: 0.85; }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* 3D Perspective Dice */
+    .dice-scene {
+      width: 58px;
+      height: 58px;
+      perspective: 450px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .dice-pulse-ring {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      border: 2px solid #f59e0b;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dice-scene.active-turn .dice-pulse-ring {
+      animation: ringPulse 1.4s ease-out infinite;
+    }
+
+    @keyframes ringPulse {
+      0% { transform: scale(0.85); opacity: 0.9; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    .cube-dice {
+      width: 46px;
+      height: 46px;
+      position: relative;
+      transform-style: preserve-3d;
+      transform: rotateX(-20deg) rotateY(-25deg);
+      transition: transform 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .cube-dice.tumbling {
+      animation: diceTumble 0.75s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes diceTumble {
+      0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateY(0px) scale(0.92); }
+      25% { transform: rotateX(380deg) rotateY(190deg) rotateZ(120deg) translateY(-24px) scale(1.15); }
+      50% { transform: rotateX(720deg) rotateY(430deg) rotateZ(280deg) translateY(-8px) scale(1.05); }
+      75% { transform: rotateX(980deg) rotateY(640deg) rotateZ(390deg) translateY(2px) scale(0.98); }
+      100% { transform: var(--target-transform); }
+    }
+
+    .cube-face {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      background: linear-gradient(145deg, #ffffff, #f1f5f9);
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.15);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 4px;
+      box-sizing: border-box;
+      backface-visibility: hidden;
+    }
+
+    .cube-face.face-1 { transform: rotateY(0deg) translateZ(23px); }
+    .cube-face.face-6 { transform: rotateY(180deg) translateZ(23px); }
+    .cube-face.face-2 { transform: rotateY(-90deg) translateZ(23px); }
+    .cube-face.face-5 { transform: rotateY(90deg) translateZ(23px); }
+    .cube-face.face-3 { transform: rotateX(90deg) translateZ(23px); }
+    .cube-face.face-4 { transform: rotateX(-90deg) translateZ(23px); }
+
+    .cube-pip {
+      width: 8px;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 50%;
+      margin: auto;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+    }
+
+    .cube-face.face-1 .p-1 { grid-column: 2; grid-row: 2; background: #ef4444; width: 10px; height: 10px; }
+    .cube-face.face-2 .p-1 { grid-column: 1; grid-row: 1; }
+    .cube-face.face-2 .p-2 { grid-column: 3; grid-row: 3; }
+    .cube-face.face-3 .p-1 { grid-column: 1; grid-row: 1; }
+    .cube-face.face-3 .p-2 { grid-column: 2; grid-row: 2; }
+    .cube-face.face-3 .p-3 { grid-column: 3; grid-row: 3; }
+    .cube-face.face-4 .p-1 { grid-column: 1; grid-row: 1; }
+    .cube-face.face-4 .p-2 { grid-column: 3; grid-row: 1; }
+    .cube-face.face-4 .p-3 { grid-column: 1; grid-row: 3; }
+    .cube-face.face-4 .p-4 { grid-column: 3; grid-row: 3; }
+    .cube-face.face-5 .p-1 { grid-column: 1; grid-row: 1; }
+    .cube-face.face-5 .p-2 { grid-column: 3; grid-row: 1; }
+    .cube-face.face-5 .p-3 { grid-column: 2; grid-row: 2; }
+    .cube-face.face-5 .p-4 { grid-column: 1; grid-row: 3; }
+    .cube-face.face-5 .p-5 { grid-column: 3; grid-row: 3; }
+    .cube-face.face-6 .p-1 { grid-column: 1; grid-row: 1; }
+    .cube-face.face-6 .p-2 { grid-column: 3; grid-row: 1; }
+    .cube-face.face-6 .p-3 { grid-column: 1; grid-row: 2; }
+    .cube-face.face-6 .p-4 { grid-column: 3; grid-row: 2; }
+    .cube-face.face-6 .p-5 { grid-column: 1; grid-row: 3; }
+    .cube-face.face-6 .p-6 { grid-column: 3; grid-row: 3; }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-surface);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: var(--bg-subtle);
+      border: none;
+      color: var(--text-main);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .camera-frame {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 14px 0;
+      border: 2px solid var(--border-color);
+    }
+
+    #qrVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .reticle {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 65%; height: 65%;
+      border: 2px dashed #10b981;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    .toast-pill {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: var(--shadow-lg);
+      z-index: 2000;
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+    }
+
+    .toast-pill.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Universal Header -->
+  <header>
+    <div class="brand" onclick="navigateTo('menuPage')">
+      <div class="brand-icon">🎲</div>
+      <span>LUDO MASTER</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon highlight" onclick="openQrScannerModal()">
+        <span>📷</span> Scan QR
+      </button>
+      <button class="btn-icon" id="btIndicatorBtn" title="Bluetooth 10M Radio Status">
+        <span class="bt-status-dot" id="btGlobalDot"></span>
+        <span style="font-size:0.75rem;" id="btGlobalText">BT Offline</span>
+      </button>
+      <button class="btn-icon" onclick="toggleSound()">
+        <span id="soundIcon">🔊</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- PAGE 1: Main Menu -->
+    <div id="menuPage" class="page active">
+      <div class="card">
+        <h1 class="card-title">Offline Ludo</h1>
+        <p class="card-subtitle">Remote 10m connectivity with automated Bot takeover.<br>Connect via Hotspot, Bluetooth or Instant QR Sync.</p>
+
+        <div class="btn-stack">
+          <!-- Offline Room with 2/3/4 Player, Bot & Color Selection -->
+          <button class="btn-main btn-room" onclick="openConfig('room')">
+            <span>📡 OFFLINE 10M ROOM (AUTO-BT / QR)</span>
+            <span>➔</span>
+          </button>
+
+          <!-- Pass & Play with 2/3/4 Player, Bot & Color Selection -->
+          <button class="btn-main btn-pass" onclick="openConfig('local')">
+            <span>👥 PASS & PLAY (LOCAL 2-4P)</span>
+            <span>➔</span>
+          </button>
+
+          <!-- Play vs AI -->
+          <button class="btn-main btn-ai" onclick="openConfig('computer')">
+            <span>🤖 PLAY VS COMPUTER (OFFLINE)</span>
+            <span>➔</span>
+          </button>
+
+          <button class="btn-main btn-secondary" onclick="openRulesModal()">
+            <span>📜 RULES & AUTO-BOT GUIDE</span>
+            <span>?</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card" style="padding: 14px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 800; font-size: 0.88rem; color: var(--text-main);">15-SEC BOT AUTOPLAY</div>
+            <div style="color: var(--text-muted); font-size: 0.75rem;">Bot plays automatically if player is idle for 15s</div>
+          </div>
+          <span class="offline-tag" id="mainBtTag">● READY (10M)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: Player Count & Color & Bot Configuration Lobby -->
+    <div id="configPage" class="page">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <button class="btn-icon" onclick="navigateTo('menuPage')">← Back</button>
+          <h2 style="font-size: 1.1rem; font-weight: 800;" id="configModeHeader">LOBBY SETUP</h2>
+          <span class="offline-tag">OFFLINE READY</span>
+        </div>
+
+        <!-- 1. Player Count Selection -->
+        <div class="section-label">1. SELECT NUMBER OF PLAYERS</div>
+        <div class="segmented-control">
+          <button class="seg-btn active" id="btnCount2" onclick="setPlayerCount(2)">2 PLAYERS</button>
+          <button class="seg-btn" id="btnCount3" onclick="setPlayerCount(3)">3 PLAYERS</button>
+          <button class="seg-btn" id="btnCount4" onclick="setPlayerCount(4)">4 PLAYERS</button>
+        </div>
+
+        <!-- 2. Player Color & Bot Assignment -->
+        <div class="section-label">2. PLAYERS & BOT CONFIGURATION</div>
+        <div class="player-slot-list" id="playerSlotsContainer">
+          <!-- Dynamically Rendered with Bot Toggles -->
+        </div>
+
+        <div style="margin-top: 20px;">
+          <button class="btn-main btn-pass" id="configProceedBtn" onclick="proceedFromConfig()">
+            <span>ENTER MATCH ➔</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: Offline 10M Room Host Hub -->
+    <div id="roomPage" class="page">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <button class="btn-icon" onclick="navigateTo('configPage')">← Back</button>
+          <h2 style="font-size: 1.1rem; font-weight: 800;">10M OFFLINE ROOM</h2>
+          <span class="offline-tag" id="roomStatusPill">HOST READY</span>
+        </div>
+
+        <div class="segmented-control" style="margin-bottom: 14px;">
+          <button class="seg-btn active" id="tabHostBtn" onclick="switchRoomTab('host')">Host (Show QR)</button>
+          <button class="seg-btn" id="tabJoinBtn" onclick="switchRoomTab('join')">Join (Scan QR)</button>
+        </div>
+
+        <!-- HOST TAB -->
+        <div id="roomHostSection">
+          <p style="font-size: 0.82rem; color: var(--text-muted); text-align: center;">
+            Have other player(s) scan this QR code. <b>Bluetooth connects automatically</b> without manual setup!
+          </p>
+
+          <div class="qr-box">
+            <div class="qr-container" id="hostQrContainer">
+              <canvas id="hostQrCanvas"></canvas>
+            </div>
+            <div class="room-badge" id="roomCodeText">ROOM: LUDO-9042</div>
+            <div class="offline-tag" id="hostConfigSummary">4 PLAYERS • READY</div>
+          </div>
+
+          <button class="btn-main btn-room" onclick="launchP2PGame(true)">
+            <span>🎮 START MATCH (AS HOST)</span>
+            <span>➔</span>
+          </button>
+        </div>
+
+        <!-- JOIN TAB -->
+        <div id="roomJoinSection" style="display: none; text-align: center;">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            Tap below to scan the Host's QR Code. Bluetooth and network channels will pair automatically.
+          </p>
+          <button class="btn-main btn-room" onclick="openQrScannerModal()">
+            <span>📷 SCAN HOST QR (AUTO-CONNECT)</span>
+            <span>🔍</span>
+          </button>
+          <div style="margin: 16px 0; font-size: 0.8rem; color: var(--text-muted);">OR Enter Room ID Manually:</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="manualRoomCode" placeholder="e.g. LUDO-5231" 
+                   style="flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: #ffffff; color: var(--text-main); font-weight: 800; text-transform: uppercase;">
+            <button class="btn-icon highlight" onclick="connectManualRoom()">Connect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: The Clean Light Ludo Board & Controls -->
+    <div id="gamePage" class="page">
+      <div class="game-header">
+        <button class="btn-icon" onclick="confirmExitGame()">← Exit Game</button>
+        <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px;" id="gameModeTitle">
+          PASS & PLAY (4P)
+        </div>
+        <button class="btn-icon highlight" onclick="openShareTurnModal()" title="Sync turn via QR code">
+          <span>📤 Sync QR</span>
+        </button>
+      </div>
+
+      <!-- Real-Time "Stop Bot" Takeover Notification & Button -->
+      <div class="bot-takeover-bar" id="botTakeoverBar">
+        <div class="bot-takeover-info">
+          <span>🤖</span>
+          <span id="botTakeoverText">Bot is playing on your behalf...</span>
+        </div>
+        <button class="btn-stop-bot" onclick="stopBotTakeover()">
+          <span>✋ Stop Bot (Take Control)</span>
+        </button>
+      </div>
+
+      <!-- Clean High-Contrast Light Board -->
+      <div class="board-container">
+        <canvas id="ludoCanvas" width="600" height="600"></canvas>
+      </div>
+
+      <!-- Controls Bar with 3D Dice -->
+      <div class="game-controls-bar">
+        <div class="turn-status-box">
+          <div class="turn-orb" id="currentTurnDot" style="background-color: var(--red);"></div>
+          <div class="turn-meta">
+            <h4 id="currentTurnName">PLAYER 1 TURN</h4>
+            <p id="currentTurnStatus">Tap dice to roll</p>
+            <div class="turn-countdown-badge" id="turnTimerBadge">
+              <span>⏱️</span>
+              <span id="turnTimerSecs">15s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D CUBE DICE STAGE -->
+        <div class="dice-scene active-turn" id="diceElement" onclick="handleDiceClick()">
+          <div class="dice-pulse-ring"></div>
+          <div class="cube-dice" id="cubeDice">
+            <div class="cube-face face-1"><div class="cube-pip p-1"></div></div>
+            <div class="cube-face face-6">
+              <div class="cube-pip p-1"></div><div class="cube-pip p-2"></div>
+              <div class="cube-pip p-3"></div><div class="cube-pip p-4"></div>
+              <div class="cube-pip p-5"></div><div class="cube-pip p-6"></div>
+            </div>
+            <div class="cube-face face-2"><div class="cube-pip p-1"></div><div class="cube-pip p-2"></div></div>
+            <div class="cube-face face-5">
+              <div class="cube-pip p-1"></div><div class="cube-pip p-2"></div>
+              <div class="cube-pip p-3"></div><div class="cube-pip p-4"></div>
+              <div class="cube-pip p-5"></div>
+            </div>
+            <div class="cube-face face-3"><div class="cube-pip p-1"></div><div class="cube-pip p-2"></div><div class="cube-pip p-3"></div></div>
+            <div class="cube-face face-4">
+              <div class="cube-pip p-1"></div><div class="cube-pip p-2"></div>
+              <div class="cube-pip p-3"></div><div class="cube-pip p-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL 0: Automatic Permissions Setup Dialog -->
+  <div class="modal-backdrop" id="permissionsModal">
+    <div class="modal-box" style="text-align: center;">
+      <h2 style="font-size: 1.4rem; margin-bottom: 8px;">📡 Device Permissions</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 18px;">
+        To connect to friends within 10 meters without internet and scan QR codes, this game requires <b>Camera</b> and <b>Bluetooth Radio</b> access.
+      </p>
+      <div style="text-align: left; background: var(--bg-subtle); padding: 14px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem;">
+        <div style="margin-bottom: 8px;">📷 <b>Camera:</b> Scan room & turn QR codes</div>
+        <div>📶 <b>Bluetooth:</b> Automatic pairing with nearby devices (10m)</div>
+      </div>
+      <button class="btn-main btn-pass" onclick="requestStartupPermissions()">
+        <span>ALLOW PERMISSIONS ➔</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL MODAL 1: QR Code Scanner -->
+  <div class="modal-backdrop" id="qrScannerModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeQrScannerModal()">✕</button>
+      <h3 style="margin-bottom: 4px; font-size: 1.2rem; color: var(--text-main);">📷 OFFLINE QR SCANNER</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+        Point at Host's QR Code. Bluetooth will connect automatically.
+      </p>
+
+      <div class="camera-frame">
+        <video id="qrVideo" playsinline></video>
+        <canvas id="qrScanCanvas" style="display: none;"></canvas>
+        <div class="reticle"></div>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: space-between;">
+        <button class="btn-icon" onclick="switchCamera()">🔄 Flip Camera</button>
+        <button class="btn-icon highlight" onclick="triggerFileUploadScan()">📁 Load Image</button>
+        <input type="file" id="qrFileInput" accept="image/*" style="display: none;" onchange="handleQrFile(this)">
+      </div>
+      <div id="scanStatusMsg" style="margin-top: 10px; font-size: 0.82rem; color: var(--green); text-align: center; min-height: 1.2rem;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Turn QR Sync Modal -->
+  <div class="modal-backdrop" id="turnQrModal">
+    <div class="modal-box" style="text-align: center;">
+      <button class="modal-close-btn" onclick="closeTurnQrModal()">✕</button>
+      <h3 style="margin-bottom: 6px; color: var(--text-main);">📤 AIR-GAP TURN SYNC</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+        Opponent can scan this QR code with their camera to sync your turn instantly.
+      </p>
+      <div class="qr-box">
+        <div class="qr-container">
+          <canvas id="turnSyncQrCanvas"></canvas>
+        </div>
+      </div>
+      <button class="btn-main btn-secondary" onclick="closeTurnQrModal()">Done</button>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Rules & Remote Play Instructions -->
+  <div class="modal-backdrop" id="rulesModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeRulesModal()">✕</button>
+      <h3 style="margin-bottom: 12px; color: var(--text-main);">📜 GAME RULES & AUTO-BOT</h3>
+      <ul style="font-size: 0.88rem; line-height: 1.65; color: var(--text-muted); padding-left: 20px;">
+        <li><b style="color:var(--text-main);">15-Second Auto Bot:</b> If a player does not roll or pick a pawn within 15 seconds, the bot takes over. Tap <b>"Stop Bot"</b> to reclaim control!</li>
+        <li><b style="color:var(--text-main);">Player Bot Toggle:</b> You can set any player slot to be played by a Bot directly in the lobby setup.</li>
+        <li><b style="color:var(--text-main);">Auto Bluetooth Link:</b> Scanning the Host's QR Code automatically pairs devices via Bluetooth within 10 meters.</li>
+        <li>Roll a <b style="color:var(--text-main);">6</b> to deploy a pawn from your yard and earn a bonus roll.</li>
+        <li>Landing on an opponent's token sends it back to base and awards a bonus roll!</li>
+        <li>Star cells are Safe Zones (immune to capture).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MODAL 4: Victory Celebration -->
+  <div class="modal-backdrop" id="winModal">
+    <div class="modal-box" style="text-align: center;">
+      <h1 style="font-size: 3rem; margin-bottom: 6px;">🏆</h1>
+      <h2 id="winnerText" style="font-size: 1.5rem; margin-bottom: 8px; color: var(--text-main);">PLAYER 1 WINS!</h2>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+        All pawns safely reached home!
+      </p>
+      <button class="btn-main btn-pass" onclick="navigateTo('menuPage'); closeWinModal();">
+        <span>RETURN TO MAIN MENU</span>
+        <span>✓</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div class="toast-pill" id="appToast">Notification</div>
+
+  <script>
+    /* ==========================================================
+       1. STARTUP PERMISSIONS & HARDWARE DETECTION
+       ========================================================== */
+    function checkAndPromptStartupPermissions() {
+      const hasAsked = localStorage.getItem('ludo_perms_asked');
+      if (!hasAsked) {
+        document.getElementById('permissionsModal').classList.add('active');
+      } else {
+        verifyAvailableHardware();
+      }
+    }
+
+    async function requestStartupPermissions() {
+      document.getElementById('permissionsModal').classList.remove('active');
+      localStorage.setItem('ludo_perms_asked', 'true');
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          stream.getTracks().forEach(track => track.stop());
+          showToast("Camera access granted!");
+        }
+      } catch (err) {
+        console.log("Camera permission deferred to actual scan.");
+      }
+
+      verifyAvailableHardware();
+    }
+
+    function verifyAvailableHardware() {
+      if (navigator.bluetooth) {
+        document.getElementById('btGlobalText').innerText = "BT Ready (10m)";
+        document.getElementById('btGlobalDot').classList.add('active');
+        document.getElementById('mainBtTag').innerText = "● BLUETOOTH READY";
+      } else {
+        document.getElementById('btGlobalText').innerText = "Air-Gap QR Only";
+        document.getElementById('mainBtTag').innerText = "● AIR-GAP QR READY";
+      }
+    }
+
+    /* ==========================================================
+       2. AUTOMATIC BLUETOOTH HANDSHAKE & TEARDOWN
+       ========================================================== */
+    let activeBtDevice = null;
+    let activeGattServer = null;
+
+    async function autoConnectBluetoothFromQR(btPayload) {
+      if (!navigator.bluetooth) return;
+
+      showToast("Auto-connecting to Host over Bluetooth (10m)...");
+
+      try {
+        const targetNamePrefix = btPayload.btName || "Ludo";
+
+        activeBtDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ namePrefix: targetNamePrefix }],
+          optionalServices: ['generic_access', 'battery_service']
+        });
+
+        activeBtDevice.addEventListener('gattserverdisconnected', onBluetoothDisconnected);
+        activeGattServer = await activeBtDevice.gatt.connect();
+
+        document.getElementById('btGlobalText').innerText = "BT Connected";
+        document.getElementById('btGlobalDot').classList.add('active');
+        showToast(`Bluetooth linked to ${activeBtDevice.name || 'Host'}!`);
+      } catch (err) {
+        console.log("Bluetooth auto-pairing deferred to QR sync:", err);
+      }
+    }
+
+    function disconnectBluetoothAutomatically() {
+      if (activeBtDevice && activeBtDevice.gatt && activeBtDevice.gatt.connected) {
+        try {
+          activeBtDevice.gatt.disconnect();
+          showToast("Bluetooth disconnected.");
+        } catch (e) {}
+      }
+      activeBtDevice = null;
+      activeGattServer = null;
+      document.getElementById('btGlobalText').innerText = "BT Standby";
+      document.getElementById('btGlobalDot').classList.remove('active');
+    }
+
+    function onBluetoothDisconnected() {
+      showToast("Bluetooth disconnected.");
+      disconnectBluetoothAutomatically();
+    }
+
+    window.addEventListener('beforeunload', () => {
+      disconnectBluetoothAutomatically();
+      stopTurnTimer();
+    });
+
+    /* ==========================================================
+       3. AUTHENTIC LUDO CLUB SYNTHESIZED SOUNDS (100% Offline)
+       ========================================================== */
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').innerText = soundEnabled ? '🔊' : '🔇';
+      showToast(soundEnabled ? "Audio On" : "Audio Muted");
+    }
+
+    // Ludo Club Realistic Shaker Cup & Bouncing Table Clatter
+    function playDiceTumbleAudio() {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      // 1. Shaker cup rattle
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+          try {
+            const bufferSize = audioCtx.sampleRate * 0.035;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let j = 0; j < bufferSize; j++) {
+              data[j] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1800 + Math.random() * 800;
+            filter.Q.value = 4;
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+          } catch(e) {}
+        }, i * 75);
+      }
+
+      // 2. Solid table impacts
+      const impactDelays = [340, 470, 580, 680];
+      impactDelays.forEach((delay, idx) => {
+        setTimeout(() => {
+          try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            const freq = 320 - idx * 45;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.06);
+            gain.gain.setValueAtTime(0.24 - idx * 0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.06);
+          } catch(e) {}
+        }, delay);
+      });
+    }
+
+    // Ludo Club "Tok-Tok-Tok" Woodblock Pawn Hopping
+    function playHopSound(stepIndex) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        const baseFreq = 580 + (stepIndex % 4) * 45;
+        osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.4, audioCtx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+      } catch(e) {}
+    }
+
+    // Ludo Club 6 Fanfare
+    function playSixFanfare() {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.22);
+          } catch(e) {}
+        }, idx * 80);
+      });
+    }
+
+    // Pawn Knockout Whack & Whistle
+    function playCaptureSound() {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(260, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.16);
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.16);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.16);
+      } catch(e) {}
+
+      setTimeout(() => {
+        try {
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(700, audioCtx.currentTime);
+          osc2.frequency.linearRampToValueAtTime(200, audioCtx.currentTime + 0.25);
+          gain2.gain.setValueAtTime(0.25, audioCtx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.start();
+          osc2.stop(audioCtx.currentTime + 0.25);
+        } catch(e) {}
+      }, 100);
+    }
+
+    // Deploy out of yard swoosh
+    function playDeploySound() {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.28, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    function playWinSound() {
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+        setTimeout(() => {
+          playTone(freq, 'sine', 0.25);
+        }, idx * 120);
+      });
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.1) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    /* ==========================================================
+       4. CRYPTOGRAPHIC UNBIASED PSEUDO-RANDOM GENERATOR
+       ========================================================== */
+    function getProvablyFairDiceRoll() {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const buffer = new Uint32Array(1);
+        const maxUnbiasedRange = Math.floor(0xFFFFFFFF / 6) * 6;
+        let randomVal;
+
+        do {
+          window.crypto.getRandomValues(buffer);
+          randomVal = buffer[0];
+        } while (randomVal >= maxUnbiasedRange);
+
+        return (randomVal % 6) + 1;
+      }
+      return Math.floor(Math.random() * 6) + 1;
+    }
+
+    /* ==========================================================
+       5. 3D PERSPECTIVE CUBE DICE ORIENTATION CONTROLLER
+       ========================================================== */
+    const DICE_FACE_ROTATIONS = {
+      1: { x: 0,   y: 0 },
+      2: { x: 0,   y: 90 },
+      3: { x: -90, y: 0 },
+      4: { x: 90,  y: 0 },
+      5: { x: 0,   y: -90 },
+      6: { x: 0,   y: 180 }
+    };
+
+    let rollAngleAccumulatorX = 0;
+    let rollAngleAccumulatorY = 0;
+
+    function applyCubeFace(val, animate = true) {
+      const cube = document.getElementById('cubeDice');
+      const base = DICE_FACE_ROTATIONS[val] || { x: 0, y: 0 };
+
+      if (!animate) {
+        cube.classList.remove('tumbling');
+        cube.style.transform = `rotateX(${base.x}deg) rotateY(${base.y}deg)`;
+        return;
+      }
+
+      rollAngleAccumulatorX += 720;
+      rollAngleAccumulatorY += 720;
+
+      const finalX = rollAngleAccumulatorX + base.x;
+      const finalY = rollAngleAccumulatorY + base.y;
+
+      cube.style.setProperty('--target-transform', `rotateX(${finalX}deg) rotateY(${finalY}deg) rotateZ(0deg) translateY(0px) scale(1)`);
+      
+      cube.classList.remove('tumbling');
+      void cube.offsetWidth;
+      cube.classList.add('tumbling');
+    }
+
+    /* ==========================================================
+       6. 15-SECOND TURN TIMEOUT & BOT TAKEOVER ENGINE
+       ========================================================= */
+    let turnCountdown = 15;
+    let turnTimerInterval = null;
+
+    function startTurnTimer() {
+      stopTurnTimer();
+      turnCountdown = 15;
+      updateTurnTimerUI();
+
+      const currentColor = gameState.currentTurn;
+      const isPlayerBot = isBotForColor(currentColor);
+
+      updateBotTakeoverUI();
+
+      // If already a designated bot or auto-bot engaged, act immediately
+      if (isPlayerBot) {
+        setTimeout(executeBotTurn, 800);
+        return;
+      }
+
+      // Start 15s human timer countdown
+      turnTimerInterval = setInterval(() => {
+        turnCountdown--;
+        updateTurnTimerUI();
+
+        if (turnCountdown <= 0) {
+          stopTurnTimer();
+          // Engage Auto-Bot takeover for this player!
+          gameState.autoBotEngaged[currentColor] = true;
+          showToast(`🤖 15s timeout! Bot took over for ${COLOR_NAMES[currentColor]}`);
+          updateBotTakeoverUI();
+          executeBotTurn();
+        }
+      }, 1000);
+    }
+
+    function stopTurnTimer() {
+      if (turnTimerInterval) {
+        clearInterval(turnTimerInterval);
+        turnTimerInterval = null;
+      }
+    }
+
+    function updateTurnTimerUI() {
+      const secsEl = document.getElementById('turnTimerSecs');
+      const badgeEl = document.getElementById('turnTimerBadge');
+      if (secsEl) secsEl.innerText = `${turnCountdown}s`;
+
+      if (badgeEl) {
+        if (turnCountdown <= 5) {
+          badgeEl.classList.add('urgent');
+        } else {
+          badgeEl.classList.remove('urgent');
+        }
+      }
+    }
+
+    function isBotForColor(color) {
+      if (gameState.autoBotEngaged[color]) return true;
+      const cfg = playerConfigs.find(p => p.color === color);
+      return cfg ? !!cfg.isBot : false;
+    }
+
+    function updateBotTakeoverUI() {
+      const bar = document.getElementById('botTakeoverBar');
+      const text = document.getElementById('botTakeoverText');
+      const currentColor = gameState.currentTurn;
+
+      const isBotActive = gameState.autoBotEngaged[currentColor] || (isBotForColor(currentColor) && gameState.mode !== 'computer');
+
+      if (isBotActive) {
+        bar.style.display = 'flex';
+        text.innerText = `Bot is playing on behalf of ${COLOR_NAMES[currentColor]}...`;
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+
+    // Reclaim control when player taps "Stop Bot" button
+    function stopBotTakeover() {
+      const currentColor = gameState.currentTurn;
+      gameState.autoBotEngaged[currentColor] = false;
+
+      const cfg = playerConfigs.find(p => p.color === currentColor);
+      if (cfg) cfg.isBot = false;
+
+      updateBotTakeoverUI();
+      showToast(`✋ Bot stopped! You reclaimed ${COLOR_NAMES[currentColor]}`);
+
+      // Restart countdown timer so user has fresh 15s
+      startTurnTimer();
+    }
+
+    function executeBotTurn() {
+      if (!gameState.hasRolled && !gameState.isRolling) {
+        rollDice();
+      } else if (gameState.hasRolled) {
+        setTimeout(makeAiMove, 600);
+      }
+    }
+
+    /* ==========================================================
+       7. NAVIGATION & MODALS
+       ========================================================== */
+    function navigateTo(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(pageId);
+      if (target) target.classList.add('active');
+
+      if (pageId === 'gamePage') {
+        setTimeout(resizeBoard, 50);
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('appToast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function openRulesModal() { document.getElementById('rulesModal').classList.add('active'); }
+    function closeRulesModal() { document.getElementById('rulesModal').classList.remove('active'); }
+    function closeWinModal() { document.getElementById('winModal').classList.remove('active'); }
+    function openShareTurnModal() {
+      generateTurnSyncQr();
+      document.getElementById('turnQrModal').classList.add('active');
+    }
+    function closeTurnQrModal() { document.getElementById('turnQrModal').classList.remove('active'); }
+
+    /* ==========================================================
+       8. 100% RELIABLE OFFLINE QR CODE GENERATOR
+       ========================================================== */
+    function renderCustomQrCode(canvasEl, textData) {
+      if (typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(canvasEl, textData, {
+          width: 200,
+          margin: 1,
+          color: { dark: '#0f172a', light: '#ffffff' }
+        }, function(error) {
+          if (error) renderMatrixFallback(canvasEl, textData);
+        });
+      } else {
+        renderMatrixFallback(canvasEl, textData);
+      }
+    }
+
+    function renderMatrixFallback(canvasEl, text) {
+      const ctx = canvasEl.getContext('2d');
+      canvasEl.width = 200;
+      canvasEl.height = 200;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 200, 200);
+
+      function drawFinder(x, y) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(x, y, 42, 42);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + 6, y + 6, 30, 30);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(x + 12, y + 12, 18, 18);
+      }
+      drawFinder(10, 10);
+      drawFinder(148, 10);
+      drawFinder(10, 148);
+
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) hash = (hash << 5) - hash + text.charCodeAt(i);
+
+      ctx.fillStyle = '#0f172a';
+      for (let r = 0; r < 20; r++) {
+        for (let c = 0; c < 20; c++) {
+          if ((r < 6 && c < 6) || (r < 6 && c > 13) || (r > 13 && c < 6)) continue;
+          const bit = (Math.abs(hash * (r + 1) * (c + 1))) % 7;
+          if (bit < 3) ctx.fillRect(10 + c * 9, 10 + r * 9, 7, 7);
+        }
+      }
+    }
+
+    /* ==========================================================
+       9. CONFIGURATION ENGINE (2, 3, 4 Players, Colors & Bot)
+       ========================================================== */
+    let selectedMode = 'local';
+    let playerCount = 4;
+    const AVAILABLE_COLORS = ['red', 'green', 'yellow', 'blue'];
+    const COLOR_NAMES = { red: 'Red', green: 'Green', yellow: 'Yellow', blue: 'Blue' };
+    const COLOR_HEX = {
+      red: '#ef4444',
+      green: '#10b981',
+      yellow: '#f59e0b',
+      blue: '#2563eb'
+    };
+    const COLOR_LIGHT = {
+      red: '#fee2e2',
+      green: '#d1fae5',
+      yellow: '#fef3c7',
+      blue: '#dbeafe'
+    };
+    const COLOR_BORDER = {
+      red: '#dc2626',
+      green: '#059669',
+      yellow: '#d97706',
+      blue: '#1d4ed8'
+    };
+
+    let playerConfigs = [
+      { id: 0, label: 'Player 1', color: 'red', isBot: false },
+      { id: 1, label: 'Player 2', color: 'green', isBot: false },
+      { id: 2, label: 'Player 3', color: 'yellow', isBot: false },
+      { id: 3, label: 'Player 4', color: 'blue', isBot: false }
+    ];
+
+    function openConfig(mode) {
+      selectedMode = mode;
+      const headers = {
+        local: 'PASS & PLAY SETUP',
+        room: '10M OFFLINE ROOM SETUP',
+        computer: 'VS COMPUTER SETUP'
+      };
+      document.getElementById('configModeHeader').innerText = headers[mode] || 'LOBBY SETUP';
+
+      if (mode === 'computer') {
+        setPlayerCount(2);
+        document.getElementById('btnCount3').style.display = 'none';
+        document.getElementById('btnCount4').style.display = 'none';
+      } else {
+        document.getElementById('btnCount3').style.display = 'block';
+        document.getElementById('btnCount4').style.display = 'block';
+      }
+
+      renderPlayerSlots();
+      navigateTo('configPage');
+    }
+
+    function setPlayerCount(count) {
+      playerCount = count;
+      [2, 3, 4].forEach(c => {
+        const btn = document.getElementById(`btnCount${c}`);
+        if (btn) btn.classList.toggle('active', c === count);
+      });
+
+      const presets = {
+        2: ['red', 'yellow'],
+        3: ['red', 'green', 'yellow'],
+        4: ['red', 'green', 'yellow', 'blue']
+      };
+
+      playerConfigs = [];
+      for (let i = 0; i < count; i++) {
+        let label = `Player ${i + 1}`;
+        let isBot = false;
+
+        if (selectedMode === 'computer' && i === 1) {
+          label = 'Computer AI';
+          isBot = true;
+        }
+        if (selectedMode === 'room') {
+          label = i === 0 ? 'Host (You)' : `Guest ${i}`;
+        }
+
+        playerConfigs.push({
+          id: i,
+          label: label,
+          color: presets[count][i] || AVAILABLE_COLORS[i],
+          isBot: isBot
+        });
+      }
+
+      renderPlayerSlots();
+    }
+
+    function renderPlayerSlots() {
+      const container = document.getElementById('playerSlotsContainer');
+      container.innerHTML = '';
+
+      playerConfigs.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'player-slot-row';
+
+        // Slot Header
+        const header = document.createElement('div');
+        header.className = 'slot-header';
+
+        const identity = document.createElement('div');
+        identity.className = 'slot-identity';
+
+        const dot = document.createElement('div');
+        dot.className = 'slot-dot';
+        dot.style.backgroundColor = COLOR_HEX[p.color];
+
+        const text = document.createElement('div');
+        text.innerHTML = `<div style="font-weight:800; font-size:0.92rem;">${p.label}</div>
+                          <div style="font-size:0.75rem; color:var(--text-muted);">${COLOR_NAMES[p.color]}</div>`;
+
+        identity.appendChild(dot);
+        identity.appendChild(text);
+
+        // Bot Toggle Control
+        const botToggle = document.createElement('div');
+        botToggle.className = 'bot-mode-toggle';
+        botToggle.innerHTML = `
+          <button class="bot-toggle-btn ${!p.isBot ? 'active' : ''}" onclick="setSlotBot(${idx}, false)">👤 Human</button>
+          <button class="bot-toggle-btn ${p.isBot ? 'active' : ''}" onclick="setSlotBot(${idx}, true)">🤖 Bot</button>
+        `;
+
+        header.appendChild(identity);
+        header.appendChild(botToggle);
+
+        // Swatches controls
+        const controls = document.createElement('div');
+        controls.className = 'slot-controls';
+
+        const swatches = document.createElement('div');
+        swatches.className = 'color-swatches';
+
+        AVAILABLE_COLORS.forEach(c => {
+          const swatch = document.createElement('div');
+          swatch.className = `swatch ${p.color === c ? 'active' : ''}`;
+          swatch.style.backgroundColor = COLOR_HEX[c];
+          swatch.onclick = () => selectColorForPlayer(idx, c);
+          swatches.appendChild(swatch);
+        });
+
+        const statusNote = document.createElement('span');
+        statusNote.style.fontSize = '0.75rem';
+        statusNote.style.color = p.isBot ? '#d97706' : '#10b981';
+        statusNote.style.fontWeight = '700';
+        statusNote.innerText = p.isBot ? '🤖 Bot Player' : '⏱️ 15s Auto-Bot Enabled';
+
+        controls.appendChild(swatches);
+        controls.appendChild(statusNote);
+
+        row.appendChild(header);
+        row.appendChild(controls);
+        container.appendChild(row);
+      });
+    }
+
+    function setSlotBot(idx, isBot) {
+      playerConfigs[idx].isBot = isBot;
+      renderPlayerSlots();
+    }
+
+    function selectColorForPlayer(playerIndex, color) {
+      const existingOwner = playerConfigs.find((p, idx) => idx !== playerIndex && p.color === color);
+      if (existingOwner) {
+        existingOwner.color = playerConfigs[playerIndex].color;
+      }
+      playerConfigs[playerIndex].color = color;
+      renderPlayerSlots();
+    }
+
+    function proceedFromConfig() {
+      if (selectedMode === 'room') {
+        openOfflineRoomLobby();
+      } else {
+        startActiveGame();
+      }
+    }
+
+    /* ==========================================================
+       10. 10M ROOM P2P & OPTICAL SYNC LOGIC
+       ========================================================== */
+    let localRoomId = "LUDO-" + Math.floor(1000 + Math.random() * 9000);
+
+    function openOfflineRoomLobby() {
+      navigateTo('roomPage');
+      generateAndDisplayHostQR();
+    }
+
+    function generateAndDisplayHostQR() {
+      document.getElementById('roomCodeText').innerText = `ROOM: ${localRoomId}`;
+      document.getElementById('hostConfigSummary').innerText = `${playerCount} PLAYERS • HOST: ${COLOR_NAMES[playerConfigs[0].color].toUpperCase()}`;
+
+      const canvasEl = document.getElementById('hostQrCanvas');
+      
+      const payload = JSON.stringify({
+        protocol: 'OFFLINE_LUDO_10M',
+        id: localRoomId,
+        btName: 'Ludo_' + localRoomId,
+        host: true,
+        count: playerCount,
+        colors: playerConfigs.map(p => p.color),
+        ts: Date.now()
+      });
+
+      renderCustomQrCode(canvasEl, payload);
+      setupLocalBroadcastListener();
+    }
+
+    function switchRoomTab(tab) {
+      document.querySelectorAll('#roomPage .seg-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('roomHostSection').style.display = 'none';
+      document.getElementById('roomJoinSection').style.display = 'none';
+
+      if (tab === 'host') {
+        document.getElementById('tabHostBtn').classList.add('active');
+        document.getElementById('roomHostSection').style.display = 'block';
+        generateAndDisplayHostQR();
+      } else if (tab === 'join') {
+        document.getElementById('tabJoinBtn').classList.add('active');
+        document.getElementById('roomJoinSection').style.display = 'block';
+      }
+    }
+
+    function launchP2PGame(asHost) {
+      gameState.assignedColor = playerConfigs[0].color;
+      startActiveGame();
+      showToast(`10m Room Started! You play as ${COLOR_NAMES[gameState.assignedColor]}`);
+    }
+
+    function connectManualRoom() {
+      const code = document.getElementById('manualRoomCode').value.trim().toUpperCase();
+      if (!code) return showToast("Enter Room ID");
+      joinRoomByPayload({ id: code, count: playerCount, colors: playerConfigs.map(p => p.color) });
+    }
+
+    function joinRoomByPayload(data) {
+      localRoomId = data.id;
+      if (data.count) playerCount = data.count;
+      if (data.colors) {
+        playerConfigs = data.colors.map((c, i) => ({
+          id: i,
+          label: i === 1 ? 'Guest (You)' : `Player ${i + 1}`,
+          color: c,
+          isBot: false
+        }));
+      }
+
+      gameState.assignedColor = playerConfigs[1] ? playerConfigs[1].color : playerConfigs[0].color;
+      setupLocalBroadcastListener();
+      showToast(`Linked to ${data.id}! Playing as ${COLOR_NAMES[gameState.assignedColor]}`);
+      startActiveGame();
+    }
+
+    let broadcastChan = null;
+    function setupLocalBroadcastListener() {
+      try {
+        if (broadcastChan) broadcastChan.close();
+        broadcastChan = new BroadcastChannel('light_ludo_10m_' + localRoomId);
+        broadcastChan.onmessage = (e) => handleIncomingNetworkData(e.data);
+      } catch(e) {}
+    }
+
+    function broadcastGameState() {
+      const payload = {
+        protocol: 'OFFLINE_LUDO_10M',
+        type: 'SYNC_STATE',
+        roomId: localRoomId,
+        state: gameState
+      };
+      if (broadcastChan) {
+        try { broadcastChan.postMessage(payload); } catch(e) {}
+      }
+    }
+
+    function handleIncomingNetworkData(msg) {
+      if (!msg) return;
+      if (msg.type === 'SYNC_STATE' && msg.state) {
+        gameState.tokens = msg.state.tokens;
+        gameState.currentTurn = msg.state.currentTurn;
+        gameState.diceValue = msg.state.diceValue;
+        gameState.hasRolled = msg.state.hasRolled;
+        updateTurnUI();
+        applyCubeFace(gameState.diceValue, true);
+        drawBoard();
+        startTurnTimer();
+        showToast(`Move synced from ${COLOR_NAMES[msg.state.currentTurn]}!`);
+      }
+    }
+
+    function generateTurnSyncQr() {
+      const canvasEl = document.getElementById('turnSyncQrCanvas');
+      const payload = JSON.stringify({
+        protocol: 'OFFLINE_LUDO_10M',
+        type: 'SYNC_STATE',
+        roomId: localRoomId,
+        state: gameState
+      });
+      renderCustomQrCode(canvasEl, payload);
+    }
+
+    /* ==========================================================
+       11. LUDO GEOMETRY & SUNLIGHT-READABLE LIGHT BOARD
+       ========================================================== */
+    const BOARD_CELLS = 15;
+    const TRACK_COORDS = [
+      [1, 6], [2, 6], [3, 6], [4, 6], [5, 6],
+      [6, 5], [6, 4], [6, 3], [6, 2], [6, 1], [6, 0],
+      [7, 0], [8, 0],
+      [8, 1], [8, 2], [8, 3], [8, 4], [8, 5],
+      [9, 6], [10, 6], [11, 6], [12, 6], [13, 6], [14, 6],
+      [14, 7], [14, 8],
+      [13, 8], [12, 8], [11, 8], [10, 8], [9, 8],
+      [8, 9], [8, 10], [8, 11], [8, 12], [8, 13], [8, 14],
+      [7, 14], [6, 14],
+      [6, 13], [6, 12], [6, 11], [6, 10], [6, 9],
+      [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8],
+      [0, 7], [0, 6]
+    ];
+
+    const START_INDICES = { red: 0, green: 13, yellow: 26, blue: 39 };
+    const SAFE_STAR_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
+
+    const HOME_STRETCHES = {
+      red:    [[1, 7], [2, 7], [3, 7], [4, 7], [5, 7]],
+      green:  [[7, 1], [7, 2], [7, 3], [7, 4], [7, 5]],
+      yellow: [[13, 7], [12, 7], [11, 7], [10, 7], [9, 7]],
+      blue:   [[7, 13], [7, 12], [7, 11], [7, 10], [7, 9]]
+    };
+
+    const YARD_BASES = {
+      red:    [[2, 2], [3.5, 2], [2, 3.5], [3.5, 3.5]],
+      green:  [[11, 2], [12.5, 2], [11, 3.5], [12.5, 3.5]],
+      yellow: [[11, 11], [12.5, 11], [11, 12.5], [12.5, 12.5]],
+      blue:   [[2, 11], [3.5, 11], [2, 12.5], [3.5, 12.5]]
+    };
+
+    let gameState = {
+      mode: 'local',
+      assignedColor: 'red',
+      currentTurn: 'red',
+      diceValue: 6,
+      hasRolled: false,
+      isRolling: false,
+      consecutiveSixes: 0,
+      activeColors: ['red', 'green', 'yellow', 'blue'],
+      autoBotEngaged: { red: false, green: false, yellow: false, blue: false },
+      tokens: {
+        red:    [-1, -1, -1, -1],
+        green:  [-1, -1, -1, -1],
+        yellow: [-1, -1, -1, -1],
+        blue:   [-1, -1, -1, -1]
+      }
+    };
+
+    const canvas = document.getElementById('ludoCanvas');
+    const ctx = canvas.getContext('2d');
+    let cellSize = 40;
+
+    function resizeBoard() {
+      const container = canvas.parentElement;
+      const size = Math.min(container.clientWidth, 600);
+      canvas.width = size;
+      canvas.height = size;
+      cellSize = size / BOARD_CELLS;
+      drawBoard();
+    }
+    window.addEventListener('resize', resizeBoard);
+
+    function startActiveGame() {
+      const chosenColors = playerConfigs.map(p => p.color);
+      gameState.activeColors = chosenColors;
+      gameState.currentTurn = chosenColors[0];
+      gameState.diceValue = 6;
+      gameState.hasRolled = false;
+      gameState.isRolling = false;
+      gameState.consecutiveSixes = 0;
+      gameState.mode = selectedMode;
+      gameState.autoBotEngaged = { red: false, green: false, yellow: false, blue: false };
+
+      gameState.tokens = {
+        red:    [-1, -1, -1, -1],
+        green:  [-1, -1, -1, -1],
+        yellow: [-1, -1, -1, -1],
+        blue:   [-1, -1, -1, -1]
+      };
+
+      const titleMap = {
+        local: `PASS & PLAY (${playerCount}P)`,
+        room: `ROOM ${localRoomId} (10M)`,
+        computer: `VS COMPUTER (2P)`
+      };
+      document.getElementById('gameModeTitle').innerText = titleMap[selectedMode] || 'LUDO MATCH';
+
+      updateTurnUI();
+      navigateTo('gamePage');
+      applyCubeFace(6, false);
+      drawBoard();
+      startTurnTimer();
+    }
+
+    function confirmExitGame() {
+      if (confirm("Exit game to main menu? All active connections will be closed.")) {
+        stopTurnTimer();
+        disconnectBluetoothAutomatically();
+        navigateTo('menuPage');
+      }
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawLightYard(0, 0, 'red');
+      drawLightYard(9, 0, 'green');
+      drawLightYard(9, 9, 'yellow');
+      drawLightYard(0, 9, 'blue');
+
+      drawLightCenterHome();
+      drawLightTrackGrid();
+      drawLightStars();
+      drawAllTokens();
+    }
+
+    function drawLightYard(gridX, gridY, color) {
+      const x = gridX * cellSize;
+      const y = gridY * cellSize;
+      const size = 6 * cellSize;
+      const isActive = gameState.activeColors.includes(color);
+
+      ctx.fillStyle = isActive ? COLOR_LIGHT[color] : '#f8fafc';
+      ctx.fillRect(x, y, size, size);
+
+      ctx.strokeStyle = isActive ? COLOR_BORDER[color] : '#cbd5e1';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, size, size);
+
+      const pad = cellSize * 0.8;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(x + pad, y + pad, size - pad * 2, size - pad * 2, 12);
+      ctx.fill();
+      ctx.strokeStyle = isActive ? COLOR_BORDER[color] : '#e2e8f0';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    function drawLightCenterHome() {
+      const startX = 6 * cellSize;
+      const startY = 6 * cellSize;
+      const center = 7.5 * cellSize;
+
+      function fillHomeTri(c1, c2, color) {
+        ctx.fillStyle = COLOR_HEX[color];
+        ctx.beginPath();
+        ctx.moveTo(c1[0], c1[1]);
+        ctx.lineTo(c2[0], c2[1]);
+        ctx.lineTo(center, center);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      fillHomeTri([startX, startY], [startX, startY + 3 * cellSize], 'red');
+      fillHomeTri([startX, startY], [startX + 3 * cellSize, startY], 'green');
+      fillHomeTri([startX + 3 * cellSize, startY], [startX + 3 * cellSize, startY + 3 * cellSize], 'yellow');
+      fillHomeTri([startX, startY + 3 * cellSize], [startX + 3 * cellSize, startY + 3 * cellSize], 'blue');
+
+      ctx.beginPath();
+      ctx.arc(center, center, cellSize * 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function drawLightTrackGrid() {
+      ctx.lineWidth = 1.2;
+
+      for (let i = 0; i < TRACK_COORDS.length; i++) {
+        const [c, r] = TRACK_COORDS[i];
+        ctx.fillStyle = '#ffffff';
+
+        if (i === START_INDICES.red && gameState.activeColors.includes('red')) ctx.fillStyle = COLOR_LIGHT.red;
+        if (i === START_INDICES.green && gameState.activeColors.includes('green')) ctx.fillStyle = COLOR_LIGHT.green;
+        if (i === START_INDICES.yellow && gameState.activeColors.includes('yellow')) ctx.fillStyle = COLOR_LIGHT.yellow;
+        if (i === START_INDICES.blue && gameState.activeColors.includes('blue')) ctx.fillStyle = COLOR_LIGHT.blue;
+
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+      }
+
+      for (const color of gameState.activeColors) {
+        ctx.fillStyle = COLOR_HEX[color];
+        for (const [c, r] of HOME_STRETCHES[color]) {
+          ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+
+    function drawLightStars() {
+      SAFE_STAR_INDICES.forEach(idx => {
+        const [c, r] = TRACK_COORDS[idx];
+        drawStarShape((c + 0.5) * cellSize, (r + 0.5) * cellSize, cellSize * 0.35, '#64748b');
+      });
+    }
+
+    function drawStarShape(cx, cy, spikesRadius, color) {
+      let rot = Math.PI / 2 * 3;
+      let x = cx;
+      let y = cy;
+      const step = Math.PI / 5;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - spikesRadius);
+      for (let i = 0; i < 5; i++) {
+        x = cx + Math.cos(rot) * spikesRadius;
+        y = cy + Math.sin(rot) * spikesRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+        x = cx + Math.cos(rot) * (spikesRadius * 0.45);
+        y = cy + Math.sin(rot) * (spikesRadius * 0.45);
+        ctx.lineTo(x, y);
+        rot += step;
+      }
+      ctx.lineTo(cx, cy - spikesRadius);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function getTokenPixelCoord(color, tokenIdx) {
+      const step = gameState.tokens[color][tokenIdx];
+
+      if (step === -1) {
+        const [c, r] = YARD_BASES[color][tokenIdx];
+        return { x: c * cellSize, y: r * cellSize };
+      }
+      if (step >= 56) {
+        return { x: 7.5 * cellSize, y: 7.5 * cellSize };
+      }
+      if (step >= 51) {
+        const stretchIdx = step - 51;
+        const [c, r] = HOME_STRETCHES[color][stretchIdx];
+        return { x: (c + 0.5) * cellSize, y: (r + 0.5) * cellSize };
+      }
+
+      const trackIndex = (START_INDICES[color] + step) % 52;
+      const [c, r] = TRACK_COORDS[trackIndex];
+      return { x: (c + 0.5) * cellSize, y: (r + 0.5) * cellSize };
+    }
+
+    function drawAllTokens() {
+      const movableTokens = getMovableTokens(gameState.currentTurn, gameState.diceValue);
+
+      for (const color of gameState.activeColors) {
+        for (let i = 0; i < 4; i++) {
+          const step = gameState.tokens[color][i];
+          if (step >= 56) continue;
+
+          const pos = getTokenPixelCoord(color, i);
+          const isMovable = gameState.hasRolled && color === gameState.currentTurn && movableTokens.includes(i);
+
+          drawLightPawn(pos.x, pos.y, color, isMovable);
+        }
+      }
+    }
+
+    function drawLightPawn(x, y, color, isMovable) {
+      const radius = cellSize * 0.38;
+
+      ctx.save();
+      if (isMovable) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 1.35, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.15)';
+        ctx.fill();
+      }
+
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = COLOR_HEX[color];
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    /* ==========================================================
+       12. GAMEPLAY, HOP-BY-HOP ANIMATION & AI LOGIC
+       ========================================================== */
+    function handleDiceClick() {
+      if (gameState.isRolling || gameState.hasRolled) return;
+
+      const currentColor = gameState.currentTurn;
+      const isBot = isBotForColor(currentColor);
+
+      // Block human tap if bot is taking the turn
+      if (isBot && !gameState.autoBotEngaged[currentColor]) return;
+      if (gameState.mode === 'room' && currentColor !== gameState.assignedColor) {
+        return showToast(`Waiting for ${COLOR_NAMES[currentColor]}...`);
+      }
+
+      rollDice();
+    }
+
+    function rollDice() {
+      gameState.isRolling = true;
+      playDiceTumbleAudio();
+
+      if ('vibrate' in navigator) navigator.vibrate(35);
+
+      const finalRoll = getProvablyFairDiceRoll();
+      applyCubeFace(finalRoll, true);
+
+      setTimeout(() => {
+        gameState.isRolling = false;
+        gameState.diceValue = finalRoll;
+        gameState.hasRolled = true;
+
+        if (finalRoll === 6) {
+          playSixFanfare();
+        }
+
+        onDiceRolled(finalRoll);
+      }, 760);
+    }
+
+    function onDiceRolled(roll) {
+      if (roll === 6) gameState.consecutiveSixes++;
+      else gameState.consecutiveSixes = 0;
+
+      if (gameState.consecutiveSixes === 3) {
+        showToast("Three consecutive 6s! Turn forfeited.");
+        gameState.consecutiveSixes = 0;
+        setTimeout(nextTurn, 850);
+        return;
+      }
+
+      const movable = getMovableTokens(gameState.currentTurn, roll);
+      const isBot = isBotForColor(gameState.currentTurn);
+
+      if (movable.length === 0) {
+        document.getElementById('currentTurnStatus').innerText = `No moves for ${roll}. Passing turn.`;
+        setTimeout(nextTurn, 950);
+      } else if (movable.length === 1 && isBot) {
+        setTimeout(() => moveTokenStepByStep(gameState.currentTurn, movable[0]), 350);
+      } else if (movable.length === 1 && !isBot) {
+        setTimeout(() => moveTokenStepByStep(gameState.currentTurn, movable[0]), 350);
+      } else {
+        document.getElementById('currentTurnStatus').innerText = `Rolled a ${roll}! Select token.`;
+        drawBoard();
+
+        if (isBot) {
+          setTimeout(makeAiMove, 800);
+        } else {
+          // Restart 15s timer for token selection
+          startTurnTimer();
+        }
+      }
+    }
+
+    function getMovableTokens(color, roll) {
+      const movable = [];
+      const tokens = gameState.tokens[color];
+
+      for (let i = 0; i < 4; i++) {
+        const step = tokens[i];
+        if (step === -1 && roll === 6) movable.push(i);
+        else if (step >= 0 && step + roll <= 56) movable.push(i);
+      }
+      return movable;
+    }
+
+    // Step-by-Step pawn movement with rhythmic hopping sounds
+    function moveTokenStepByStep(color, tokenIdx) {
+      if (!gameState.hasRolled) return;
+      stopTurnTimer();
+
+      const roll = gameState.diceValue;
+      let step = gameState.tokens[color][tokenIdx];
+
+      if (step === -1 && roll === 6) {
+        playDeploySound();
+        gameState.tokens[color][tokenIdx] = 0;
+        finalizePawnMove(color, tokenIdx, roll);
+        return;
+      }
+
+      if (step < 0 || step + roll > 56) return;
+
+      gameState.hasRolled = false;
+      let hopsLeft = roll;
+
+      function hopNext() {
+        if (hopsLeft > 0) {
+          gameState.tokens[color][tokenIdx]++;
+          playHopSound(roll - hopsLeft);
+          drawBoard();
+          hopsLeft--;
+          setTimeout(hopNext, 120);
+        } else {
+          finalizePawnMove(color, tokenIdx, roll);
+        }
+      }
+
+      hopNext();
+    }
+
+    function finalizePawnMove(color, tokenIdx, roll) {
+      const newStep = gameState.tokens[color][tokenIdx];
+      let capturedBonus = false;
+
+      // Enemy pawn capture check
+      if (newStep >= 0 && newStep < 51) {
+        const trackIdx = (START_INDICES[color] + newStep) % 52;
+        if (!SAFE_STAR_INDICES.includes(trackIdx)) {
+          for (const oppColor of gameState.activeColors) {
+            if (oppColor === color) continue;
+            for (let j = 0; j < 4; j++) {
+              const oppStep = gameState.tokens[oppColor][j];
+              if (oppStep >= 0 && oppStep < 51) {
+                const oppTrackIdx = (START_INDICES[oppColor] + oppStep) % 52;
+                if (oppTrackIdx === trackIdx) {
+                  gameState.tokens[oppColor][j] = -1;
+                  capturedBonus = true;
+                  playCaptureSound();
+                  showToast(`${COLOR_NAMES[color]} captured ${COLOR_NAMES[oppColor]}! Bonus Roll!`);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (checkWin(color)) {
+        playWinSound();
+        document.getElementById('winnerText').innerText = `${COLOR_NAMES[color].toUpperCase()} WINS! 🎉`;
+        document.getElementById('winModal').classList.add('active');
+        broadcastGameState();
+        return;
+      }
+
+      drawBoard();
+
+      if (roll === 6 || capturedBonus) {
+        document.getElementById('currentTurnStatus').innerText = "Bonus roll awarded!";
+        broadcastGameState();
+        gameState.hasRolled = false;
+
+        startTurnTimer();
+      } else {
+        nextTurn();
+      }
+    }
+
+    function checkWin(color) {
+      return gameState.tokens[color].every(step => step >= 56);
+    }
+
+    function nextTurn() {
+      stopTurnTimer();
+      const idx = gameState.activeColors.indexOf(gameState.currentTurn);
+      gameState.currentTurn = gameState.activeColors[(idx + 1) % gameState.activeColors.length];
+      gameState.hasRolled = false;
+      gameState.consecutiveSixes = 0;
+
+      updateTurnUI();
+      drawBoard();
+      broadcastGameState();
+
+      startTurnTimer();
+    }
+
+    function updateTurnUI() {
+      const color = gameState.currentTurn;
+      const turnDot = document.getElementById('currentTurnDot');
+      turnDot.style.backgroundColor = COLOR_HEX[color];
+
+      const activePlayer = playerConfigs.find(p => p.color === color);
+      const name = activePlayer ? activePlayer.label : COLOR_NAMES[color];
+
+      document.getElementById('currentTurnName').innerText = `${name.toUpperCase()}'S TURN`;
+      document.getElementById('currentTurnStatus').innerText = "Tap dice to roll";
+      updateBotTakeoverUI();
+    }
+
+    function makeAiMove() {
+      const color = gameState.currentTurn;
+      const movable = getMovableTokens(color, gameState.diceValue);
+      if (movable.length === 0) return;
+
+      let bestToken = movable[0];
+      let maxScore = -999;
+
+      for (const t of movable) {
+        const step = gameState.tokens[color][t];
+        let score = 0;
+
+        if (step === -1) score += 50;
+        else {
+          const targetStep = step + gameState.diceValue;
+          if (targetStep === 56) score += 100;
+          if (targetStep > 50) score += 30;
+
+          const targetTrack = (START_INDICES[color] + targetStep) % 52;
+          if (!SAFE_STAR_INDICES.includes(targetTrack)) {
+            for (const oppColor of gameState.activeColors) {
+              if (oppColor === color) continue;
+              for (let r = 0; r < 4; r++) {
+                const oppStep = gameState.tokens[oppColor][r];
+                if (oppStep >= 0 && oppStep < 51) {
+                  const oppTrack = (START_INDICES[oppColor] + oppStep) % 52;
+                  if (oppTrack === targetTrack) score += 80;
+                }
+              }
+            }
+          }
+          score += targetStep;
+        }
+
+        if (score > maxScore) {
+          maxScore = score;
+          bestToken = t;
+        }
+      }
+
+      moveTokenStepByStep(color, bestToken);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!gameState.hasRolled) return;
+
+      const currentColor = gameState.currentTurn;
+      const isBot = isBotForColor(currentColor);
+
+      if (isBot && !gameState.autoBotEngaged[currentColor]) return;
+      if (gameState.mode === 'room' && currentColor !== gameState.assignedColor) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+      const color = gameState.currentTurn;
+      const movable = getMovableTokens(color, gameState.diceValue);
+
+      for (const t of movable) {
+        const pos = getTokenPixelCoord(color, t);
+        const dist = Math.hypot(clickX - pos.x, clickY - pos.y);
+        if (dist <= cellSize * 0.75) {
+          moveTokenStepByStep(color, t);
+          break;
+        }
+      }
+    });
+
+    /* ==========================================================
+       13. UNIVERSAL QR CODE SCANNER (Auto-BT Handshake)
+       ========================================================== */
+    let videoStream = null;
+    let facingMode = 'environment';
+
+    function openQrScannerModal() {
+      document.getElementById('qrScannerModal').classList.add('active');
+      document.getElementById('scanStatusMsg').innerText = "Starting camera...";
+      startCamera();
+    }
+
+    function closeQrScannerModal() {
+      stopCamera();
+      document.getElementById('qrScannerModal').classList.remove('active');
+      document.getElementById('scanStatusMsg').innerText = "";
+    }
+
+    async function startCamera() {
+      stopCamera();
+      const video = document.getElementById('qrVideo');
+
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facingMode }
+        });
+        video.srcObject = videoStream;
+        video.setAttribute('playsinline', true);
+        await video.play();
+        document.getElementById('scanStatusMsg').innerText = "Align QR code inside frame";
+        requestAnimationFrame(tickQrScan);
+      } catch (err) {
+        document.getElementById('scanStatusMsg').innerText = "Camera unavailable. Use 'Load Image'.";
+      }
+    }
+
+    function stopCamera() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+    }
+
+    function switchCamera() {
+      facingMode = facingMode === 'environment' ? 'user' : 'environment';
+      startCamera();
+    }
+
+    function tickQrScan() {
+      const video = document.getElementById('qrVideo');
+      if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+        const scanCanvas = document.getElementById('qrScanCanvas');
+        scanCanvas.width = video.videoWidth;
+        scanCanvas.height = video.videoHeight;
+        const sCtx = scanCanvas.getContext('2d');
+        sCtx.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
+
+        if (typeof jsQR !== 'undefined') {
+          const imageData = sCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert"
+          });
+
+          if (code) {
+            handleQrResult(code.data);
+            return;
+          }
+        }
+      }
+
+      if (document.getElementById('qrScannerModal').classList.contains('active')) {
+        requestAnimationFrame(tickQrScan);
+      }
+    }
+
+    function handleQrResult(raw) {
+      playTone(850, 'sine', 0.1);
+      closeQrScannerModal();
+
+      try {
+        const data = JSON.parse(raw);
+        if (data.protocol === 'OFFLINE_LUDO_10M') {
+          if (data.type === 'SYNC_STATE') {
+            handleIncomingNetworkData(data);
+          } else if (data.id) {
+            autoConnectBluetoothFromQR(data);
+            joinRoomByPayload(data);
+          }
+        } else {
+          joinRoomByPayload({ id: raw, count: 4, colors: ['red', 'green', 'yellow', 'blue'] });
+        }
+      } catch(e) {
+        joinRoomByPayload({ id: raw, count: 4, colors: ['red', 'green', 'yellow', 'blue'] });
+      }
+    }
+
+    function triggerFileUploadScan() { document.getElementById('qrFileInput').click(); }
+
+    function handleQrFile(input) {
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const scanCanvas = document.getElementById('qrScanCanvas');
+          scanCanvas.width = img.width;
+          scanCanvas.height = img.height;
+          const sCtx = scanCanvas.getContext('2d');
+          sCtx.drawImage(img, 0, 0);
+
+          if (typeof jsQR !== 'undefined') {
+            const imageData = sCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            if (code) handleQrResult(code.data);
+            else showToast("No QR code detected in image");
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.onload = () => {
+      setPlayerCount(4);
+      resizeBoard();
+      checkAndPromptStartupPermissions();
+    };
+  </script>
+</body>
+</html>
